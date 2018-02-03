@@ -11,114 +11,69 @@
 
 #include "sort.hh"
 
-static int compare (keytype a, keytype b)
-{
-  if (a < b)
-    return -1;
-  else if (a == b)
-    return 0;
-  else
-    return 1;
-}
 
-
-
-void merge(keytype* A,int Z,int mid,int N){
-
-	int i,j,k;
-	int a1 = mid - Z+1;
-	int a2 = N - mid;
-	keytype arr1[a1];
-	keytype arr2[a2];
-
-  for(int i=0;i<a1;i++) arr1[i]=0;
-  for(int i=0;i<a2;i++) arr2[i]=0;
-  // printf("\n");
-  // printf("Z: %d mid :%d  N:%d",Z,mid, N);
-  // printf("\n");
-	for(i =0;i<a1;i++){
-    // printf("i : %d arr1[i] : %d A[Z+i] :%lu",arr1[i],A[Z+i]);
-    //   printf("\n");
-		arr1[i]= A[Z+i];
-    // printf("i : %d arr1[i] : %d A[Z+i] :%lu",arr1[i],A[Z+i]);
-    //   printf("\n");
-	}
-  //printf("\n");
-	for(j =0;j<a2;j++){
-    // printf("i : %d arr1[i] : %d A[mid+1+j] :%lu",arr2[j],A[mid+1+j]);
-    //   printf("\n");
-    arr2[j]= A[mid+1+j];
-    // printf("i : %d arr1[i] : %d A[mid+1+j] :%lu",arr2[j],A[mid+1+j]);
-    //   printf("\n");
+int binary_search(int key, keytype* A, int start, int end){
+  // int low = start, high=max(start,end+1);
+  //
+  // i
+  while(start<end){
+    int mid=floor((start+end)/2);
+    if(key<=A[mid]) end=mid;
+    else start = mid+1;
   }
 
-	i = 0;
-   	j = 0;
-    	k = Z;
-    	while (i < a1 && j < a2)
-    	{
-        	if (compare(arr1[i],arr2[j]) <=0)
-        	{
-            		A[k] = arr1[i];
-            		i++;
-        	}
-        	else
-        	{
-            		A[k] = arr2[j];
-            		j++;
-        	}
-        	k++;
-    	}
-
-
-    	while (i < a1)
-    	{
-        	A[k] = arr1[i];
-        	i++;
-        	k++;
-    	}
-
-
-    	while (j < a2)
-    	{
-        	A[k] = arr2[j];
-        	j++;
-        	k++;
-    	}
+  return end;
 }
 
+void swap(int a, int b){
+  int tmp = a;
+  a=b;
+  b=tmp;
+}
 
+void pmerge(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3){
+  int n1 = end1-start1+1;
+  int n2 = end2-start2+1;
 
-void mergesort(keytype* A,int Z,int N){
-	if(Z<N){
-		//int mid = floor((Z+N)/2);
-    // printf("\n");
-    //  printf("Z : %d+ N : %d",Z,N);
-		int mid = Z+(N-Z)/2;
-		//mergesort(A,Z,mid-1);
-		//mergesort(A,mid,N-1);
+  if(n1<n2) {
+    swap(start1,start2);
+    swap(end1,end2);
+    swap(n1,n2);
+  }
 
-		mergesort(A,Z,mid);
-    mergesort(A,mid+1,N);
+  if(n1==0) return;
+  else{
+    int mid1 = floor((start1+end1)/2);
+    int mid2 = binary_search(T[mid1],T, start2,end2);
+    int mid3 = start3+(end1-start1)+(end2-start2);
 
-		merge(A,Z,mid,N);
-	}
+    A[mid3] = T[mid1];
+
+    #pragma omp parallel{
+      pmerge(T, start1, mid1-1, start2, mid2-1, A, start3);
+      pmerge(T, mid1+1, end1, mid2, end2, A, mid3+1);
+    }
+  }
 
 }
 
-void
-parallelSort (int N, keytype* A)
-{
-  /* Lucky you, you get to start from scratch */
-  //for(int i=0;i<N;i++) A[i]=0;
-	for(int i=0;i<N;i++){
-	  //  printf("%lu\t",A[i]);
-	}
-        mergesort(A,0,N-1);
-	//printf("\n");
-	for(int i=0;i<N;i++){
+void pmerge_sort(keytype* A, int start, int end, keytype* B, int index){
+  int n=end-start+1;
+  if(n==1) B[index] = A[start];
+  else {
+    keytype* T = new keytype[n];
+    int split_var1 = floor((start+end)/2);
+    int split_var2 = split_var1-start+1;
+    #pragma omp parallel{
+      pmerge_sort(A, start, split_var1, T, 0);
+      pmerge_sort(A, split_var1+1, end, T, split_var2+1);
+    }
+    pmerge(T,0,split_var2,split_var2+1,n,B,index);
+  }
+}
 
-//printf("%lu\t",A[i]);
-        }
+void parallelSort(int N, keytype* A){
+  keytype* B = new keytype[N];
+  pmerge_sort(A, 0, N-1, B, 0);
 
 }
