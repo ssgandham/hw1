@@ -13,9 +13,6 @@
 
 
 int binary_search(int key, keytype* A, int start, int end){
-  // int low = start, high=max(start,end+1);
-  //
-  // i
   while(start<end){
     int mid=floor((start+end)/2);
     if(key<=A[mid]) end=mid;
@@ -49,7 +46,8 @@ void pmerge(keytype* T, int start1, int end1, int start2, int end2, keytype* A, 
 
     A[mid3] = T[mid1];
 
-    #pragma omp parallel{
+    #pragma omp parallel
+    {
       pmerge(T, start1, mid1-1, start2, mid2-1, A, start3);
       pmerge(T, mid1+1, end1, mid2, end2, A, mid3+1);
     }
@@ -64,7 +62,8 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index){
     keytype* T = new keytype[n];
     int split_var1 = floor((start+end)/2);
     int split_var2 = split_var1-start+1;
-    #pragma omp parallel{
+    #pragma omp parallel
+    {
       pmerge_sort(A, start, split_var1, T, 0);
       pmerge_sort(A, split_var1+1, end, T, split_var2+1);
     }
