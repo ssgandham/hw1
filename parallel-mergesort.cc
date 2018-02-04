@@ -50,16 +50,12 @@ int binary_search(int low1, int high1, keytype key, keytype* A ) {
 	return high;
 }
 
-
 void pmerge(int start1,int start2, int start3, int end1, int end2, int index, keytype* T, keytype* A){
 	int n1 = end1 - start1 + 1;
 	int n2 = end2 - start2 + 1;
 	int Total_ele = n1+n2;
-        if(Total_ele<=index){
-                  qsort(T,Total_ele,sizeof(keytype),compare);
-
-	} else {
-
+        
+	{
 		if (n1 < n2) {
      			 number_swap(&start1,&start2);
       			 number_swap(&end1,&end2);

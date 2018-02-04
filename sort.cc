@@ -32,9 +32,6 @@ static int compare (const void* a, const void* b)
 void sequentialSort (int N, keytype* A)
 {
   qsort (A, N, sizeof (keytype), compare);
-  for(int i=0;i<N;i++){
-	printf("seq sort = %lu\t",A[i]);
-  }
 }
 
 /* ============================================================
