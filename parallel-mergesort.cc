@@ -19,6 +19,18 @@ int number_swap(int *num1, int *num2){
       *num2 = tmp;
 }
 
+int compare (const void* a, const void* b)
+{
+  keytype ka = *(const keytype *)a;
+  keytype kb = *(const keytype *)b;
+  if (ka < kb)
+    return -1;
+  else if (ka == kb)
+    return 0;
+  else
+    return 1;
+}
+
 void serialMergeForParallel(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3) {
 
 	// T[start1] is the first element of the first sub-array
@@ -119,15 +131,51 @@ void pmerge(int start1,int start2, int start3, int end1, int end2, int index, ke
 
 	//int N = n1 + n2;
 
-	if ((n1+n2) <= index) {
-		// serialize the merge:
-    printf("n1 : %d  : n2 : %d : index : %d \n",n1,n2,index);
-    printf("start1 : %d end1 : %d start2:%d end2:%d\n",start1,end1,start2,end2);
-		serialMergeForParallel(T, start1, end1, start2, end2, A, start3);
+	// if ((n1+n2) <= index) {
+	// 	// serialize the merge:
+  //   // printf("n1 : %d  : n2 : %d : index : %d \n",n1,n2,index);
+  //   printf("\nstart1 : %d end1 : %d start2:%d end2:%d : start3 : %d\n",start1,end1,start2,end2,start3);
+  //   //qsort(A + star1, end1, sizeof(keytype), compare);
+  //   // int start_tmp,end_tmp;
+  //   // if(start1<end1 && start2<end2){
+  //   //   start_tmp = start1>start2?start2:start1;
+  //   //   end_tmp = end1>end2?end1:end2;
+  //   // }else if(start1<end1){
+  //   //   start_tmp=start1;
+  //   //   end_tmp=end1;
+  //   // }else if(start2<end2){
+  //   //   start_tmp=start2;
+  //   //   end_tmp=end2;
+  //   // }
+  //   //
+  //   // start_tmp = start_tmp<0?0:start_tmp;
+  //   // end_tmp = end_tmp<0?0:end_tmp;
+  //   //   if(start_tmp<end_tmp)
+  //   //   {
+  //   //   printf("start_tmp : %d end_tmp : %d\n",start_tmp,end_tmp);
+  //   //   for(int i=start3,m=start_tmp;m<end_tmp;m++,i++) A[i]=T[m];
+  //   //   qsort(A+start_tmp, end_tmp, sizeof(keytype), compare);
+  //   // }
+  //     printf("\n\nBefore Sorting\n\n");
+  //   for(int i=0;i<10;i++)
+  //       printf("T[%d] : %lu \t", i, T[i] );
+  //
+  //       printf("\n\n");
+  //       for(int i=0;i<10;i++)
+  //       printf("A[%d] : %lu \t", i, A[i] );
+  //
+	// 	serialMergeForParallel(T, start1, end1, start2, end2, A, start3);
+  //     printf("\n\nAfter Sorting\n\ns");
+  //   for(int i=0;i<10;i++)
+  //       printf("\T[%d] : %lu \t", i, T[i] );
+  //
+  //       printf("\n\n");
+  //       for(int i=0;i<10;i++)
+  //       printf("A[%d] : %lu \t", i, A[i] );
+  //
+	// } else {
 
-	} else {
-
-
+{
 		if (n1 < n2) {
       number_swap(&start1,&start2);
       number_swap(&end1,&end2);
@@ -222,7 +270,7 @@ void parallelSort (int N, keytype* A) // the result goes into A
 //   for(int i=0;i<N;i++) {
 //   printf("A[%d] : %lu \t", i, A[i] );
 // }
-printf("\n");
+// printf("\n");
   // #pragma omp parallel
   // {
   // 	// int numOfThreads = omp_get_num_threads();
@@ -241,7 +289,7 @@ printf("\n");
 //   for(int i=0;i<N;i++) {
 //   printf("A[%d] : %lu \t", i, A[i] );
 // }
-printf("\n");
+// printf("\n");
 
 }
 /* eof */
