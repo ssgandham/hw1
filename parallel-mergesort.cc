@@ -81,13 +81,13 @@ void pmerge(int start1, int start2, int start3, int end1, int end2, int index,ke
 			int mid3 = start3 + (mid1 - start1) + (mid2 - start2);
 			A[mid3] = T[mid1];
 
-			#pragma omp parallel
+			#pragma omp task
 			{
 				pmerge(start1, start2, start3, mid1 - 1, mid2 - 1, index, T, A);
 			}
 			pmerge(mid1 + 1, mid2, mid3 + 1, end1, end2, index, T, A);
 			
-			//#pragma omp taskwait
+			#pragma omp taskwait
 	
 		}	
 	}
@@ -98,13 +98,13 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 	if (n > 1) {
 		int mid = (start + end) / 2;
 
-		#pragma omp parallel
+		#pragma omp task
 		{
 			pmerge_sort(A, start, mid, B, index);
-		}	
+		}
 		pmerge_sort(A, mid + 1, end, B, index);
 		
-		//#pragma omp taskwait
+		#pragma omp taskwait
 		pmerge(start, mid + 1, start, mid, end, index, A, B);
 		for (int i = start; i <= end; i++)
 			A[i] = B[i];
