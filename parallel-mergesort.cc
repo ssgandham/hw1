@@ -30,6 +30,59 @@ static int compare (const void* a, const void* b){
                 return 1;
 }
 
+void serialMergeForParallel(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3) {
+
+        // T[start1] is the first element of the first sub-array
+        // T[end1] is the last element of the first sub-array
+        // T[start2] is the first element of the second sub-array
+        // T[end2] is the last element of the second sub-array
+
+        // A[start3] is the first element where the right value should be written to
+
+        // control variables:
+        int i = start1;
+        int j = start2;
+        int k = start3;
+
+        while ( (i <= end1) && (j <= end2) ) {
+
+                if ( T[i] <= T[j] ) {
+
+                        A[k] = T[i];
+                        i++;
+
+                } else {
+
+                        A[k] = T[j];
+                        j++;
+
+                }
+
+                k++;
+
+        }
+
+        // either array might have elements left
+        // if the first array has elements left:
+        while (i <= end1) {
+
+                A[k] = T[i];
+                i++;
+                k++;
+
+        }
+        // if the second array has elements left:
+        while (j <= end2) {
+
+                A[k] = T[j];
+                j++;
+                k++;
+
+        }
+
+}
+
+
 
 int get_max_number(int numbA, int numbB) {
 	if(numbA>numbB) return numbA;
@@ -54,8 +107,9 @@ void pmerge(int start1,int start2, int start3, int end1, int end2, int index, ke
 	int n1 = end1 - start1 + 1;
 	int n2 = end2 - start2 + 1;
 	int Total_ele = n1+n2;
-        
-	{
+	if(Total_ele<=index){
+		serialMergeForParallel(T, start1, end1, start2, end2, A, start3);
+	}else{         
 		if (n1 < n2) {
      			 number_swap(&start1,&start2);
       			 number_swap(&end1,&end2);
