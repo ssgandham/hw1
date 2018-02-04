@@ -11,24 +11,12 @@
 #include "sort.hh"
 
 #include <string.h>
-// #include <omp.h>
+
 
 int number_swap(int *num1, int *num2){
   int tmp  = *num1;
       *num1 = *num2;
       *num2 = tmp;
-}
-
-int compare (const void* a, const void* b)
-{
-  keytype ka = *(const keytype *)a;
-  keytype kb = *(const keytype *)b;
-  if (ka < kb)
-    return -1;
-  else if (ka == kb)
-    return 0;
-  else
-    return 1;
 }
 
 void serialMergeForParallel(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3) {
@@ -126,43 +114,28 @@ void pmerge(int start1,int start2, int start3, int end1, int end2, int index, ke
 
 	// A[start3] is the first element of array that holds the final value
 
-	int n1 = end1 - start1 + 1; // number of elements in the first sub-array
-	int n2 = end2 - start2 + 1; // number of elements in the second sub-array
+	int n1 = end1 - start1 + 1;
+	int n2 = end2 - start2 + 1;
 
 	//int N = n1 + n2;
 
 	if ((n1+n2) <= index) {
 		// serialize the merge:
     printf("n1 : %d  : n2 : %d : index : %d \n",n1,n2,index);
+    printf("start1 : %d end1 : %d start2:%d end2:%d\n",start1,end1,start2,end2);
 		serialMergeForParallel(T, start1, end1, start2, end2, A, start3);
 
 	} else {
-		// divide and conquer the merge operation:
 
-		if (n1 < n2) { // complying to our assumption
+
+		if (n1 < n2) {
       number_swap(&start1,&start2);
       number_swap(&end1,&end2);
       number_swap(&n1,&n2);
-		  // int temp;
-      //
-		  // // exchange start1 and start2
-		  // temp = start1;
-		  // start1 = start2;
-		  // start2 = temp;
-      //
-		  // // exchange end1 and end2
-		  // temp = end1;
-		  // end1 = end2;
-		  // end2 = temp;
-      //
-		  // // exchange n1 and n2
-		  // temp = n1;
-		  // n1 = n2;
-		  // n2 = temp;
 
 		}
 
-		if (n1 == 0) { // if both the arrays are empty
+		if (n1 == 0) {
 
 			return;
 
@@ -175,10 +148,10 @@ void pmerge(int start1,int start2, int start3, int end1, int end2, int index, ke
 
 			#pragma omp task
       {
-        // parallelMerge(T, start1, mid1 - 1, start2, mid2 - 1, A, start3, index);
+
 			  pmerge(start1,start2, start3, mid1 - 1,mid2 - 1, index, T, A);
       }
-			//parallelMerge(T, mid1 + 1, end1, mid2, end2, A, mid3 + 1, index);
+
       pmerge(mid1+1,mid2,mid3+1,end1,end2,index, T,A);
       #pragma omp taskwait
 		}
@@ -188,7 +161,7 @@ void pmerge(int start1,int start2, int start3, int end1, int end2, int index, ke
 
 void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 
-	//int n = end - start + 1;
+
 
 	if ( (end-start+1)>1) {
   //
