@@ -94,16 +94,16 @@ void pmerge(int start1, int start2, int start3, int end1, int end2, int index,
 
 }
 
-void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
+void pmerge_sort(int start, int end, int index, keytype* A, keytype* B) {
 	int n = (end - start) + 1;
 	if (n > 1) {
 		int mid = (start + end) / 2;
 
 #pragma omp task
 		{
-			pmerge_sort(A, start, mid, B, index);
+			pmerge_sort(start, mid, index, A, B);
     }
-		pmerge_sort(A, mid + 1, end, B, index);
+		pmerge_sort(mid + 1, end, index,A, B );
 
 #pragma omp taskwait
 		pmerge(start, mid + 1, start, mid, end, index, A, B);
@@ -114,7 +114,7 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 
 void parallelSort(int N, keytype* A) {
 	keytype* B = new keytype[N];
-	pmerge_sort(A, 0, N - 1, B, 10);
+	pmerge_sort(0, N - 1, 10,A,B);
   free(B);
 
 }
