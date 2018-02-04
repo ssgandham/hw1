@@ -115,31 +115,31 @@ int binarySearch(keytype key, keytype* sub, int low1, int high1) {
 
 }
 
-void parallelMerge(keytype* T, int start1, int r1, int start2, int r2, keytype* A, int start3, int base) {
+void parallelMerge(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3, int index) {
 	// T[start1] is the first element of the first sub-array
-	// T[r1] is the last element of the first sub-array
+	// T[end1] is the last element of the first sub-array
 	// T[start2] is the first element of the second sub-array
-	// T[r2] is the last element of the second sub-array
+	// T[end2] is the last element of the second sub-array
 
-	// T[start1..r1] AND T[start2..r2] are sorted sub-arrays
+	// T[start1..end1] AND T[start2..end2] are sorted sub-arrays
 
 	// A[start3] is the first element of array that holds the final value
 
-	int n1 = r1 - start1 + 1; // number of elements in the first sub-array
-	int n2 = r2 - start2 + 1; // number of elements in the second sub-array
+	int n1 = end1 - start1 + 1; // number of elements in the first sub-array
+	int n2 = end2 - start2 + 1; // number of elements in the second sub-array
 
-	int N = n1 + n2;
+	//int N = n1 + n2;
 
-	if (N <= base) {
+	if ((n1+n2) <= index) {
 		// serialize the merge:
-		serialMergeForParallel(T, start1, r1, start2, r2, A, start3);
+		serialMergeForParallel(T, start1, end1, start2, end2, A, start3);
 
 	} else {
 		// divide and conquer the merge operation:
 
 		if (n1 < n2) { // complying to our assumption
       number_swap(&start1,&start2);
-      number_swap(&r1,&r2);
+      number_swap(&end1,&end2);
       number_swap(&n1,&n2);
 		  // int temp;
       //
@@ -148,10 +148,10 @@ void parallelMerge(keytype* T, int start1, int r1, int start2, int r2, keytype* 
 		  // start1 = start2;
 		  // start2 = temp;
       //
-		  // // exchange r1 and r2
-		  // temp = r1;
-		  // r1 = r2;
-		  // r2 = temp;
+		  // // exchange end1 and end2
+		  // temp = end1;
+		  // end1 = end2;
+		  // end2 = temp;
       //
 		  // // exchange n1 and n2
 		  // temp = n1;
@@ -166,16 +166,16 @@ void parallelMerge(keytype* T, int start1, int r1, int start2, int r2, keytype* 
 
 		} else {
 
-			int q1 = (start1 + r1) / 2;
-			int q2 = binarySearch(T[q1], T, start2, r2);
-			int q3 = start3 + (q1 - start1) + (q2 - start2);
-			A[q3] = T[q1];
+			int mid1 = (start1 + end1) / 2;
+			int mid2 = binarySearch(T[mid1], T, start2, end2);
+			int mid3 = start3 + (mid1 - start1) + (mid2 - start2);
+			A[mid3] = T[mid1];
 
 			#pragma omp task
       {
-			  parallelMerge(T, start1, q1 - 1, start2, q2 - 1, A, start3, base);
+			  parallelMerge(T, start1, mid1 - 1, start2, mid2 - 1, A, start3, index);
       }
-			parallelMerge(T, q1 + 1, r1, q2, r2, A, q3 + 1, base);
+			parallelMerge(T, mid1 + 1, end1, mid2, end2, A, mid3 + 1, index);
       #pragma omp taskwait
 		}
 	}
