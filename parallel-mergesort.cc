@@ -209,13 +209,31 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
     #pragma omp taskwait // wait for both tasks to sync up here before proceding to the merge
 		//merge(A, start, middle, end, temp); // merge the sorted sub-arrays sequentially
 		parallelMerge(A, start, mid, mid + 1, end, B, start, index); // merge the sorted sub-arrays parallely
-    printf("copy done from : start : %d end:%d\n",start,end);
+    //printf("\ncopy done from : start : %d end:%d\n",start,end);
     // for(int i=start;i<=(end-start+1);i++){
     //   int tmp = B[i];
     //   B[i] = A[i];
     //   A[i] = tmp;
     // }
-		memcpy(A + start, B + start, (end - start + 1) * sizeof(keytype));
+  //  printf("B : %lu : B+ start : %lu\n",B, B+start);
+  // printf("before mem copy :start : %d : end : %d\n",start,end);
+  //     for(int i=0;i<10;i++)
+  //     printf("A[%d] : %lu \t", i, A[i] );
+  //
+  //     printf("\n\n");
+  //     for(int i=0;i<10;i++)
+  //     printf("B[%d] : %lu \t", i, B[i] );
+      for(int i=start;i<=end;i++) A[i]=B[i];
+		//memcpy(A + start, B + start, (end - start + 1) * sizeof(keytype));
+    // printf("\n");
+    // printf("after mem copy :start : %d : end : %d\n",start,end);
+    // printf("\n\n");
+    // for(int i=0;i<10;i++)
+    // printf("A[%d] : %lu \t", i, A[i] );
+    //
+    // printf("\n\n");
+    // for(int i=0;i<10;i++)
+    // printf("B[%d] : %lu \t", i, B[i] );
 	}
 
 }
