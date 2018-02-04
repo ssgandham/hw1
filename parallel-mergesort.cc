@@ -84,8 +84,8 @@ void pmerge(int start1, int start2, int start3, int end1, int end2, int index,ke
 			#pragma omp task
 			{
 				pmerge(start1, start2, start3, mid1 - 1, mid2 - 1, index, T, A);
-				pmerge(mid1 + 1, mid2, mid3 + 1, end1, end2, index, T, A);
-			}		
+			}
+			pmerge(mid1 + 1, mid2, mid3 + 1, end1, end2, index, T, A);
 			#pragma omp taskwait
 	
 		}	
@@ -100,8 +100,8 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 		#pragma omp task
 		{
 			pmerge_sort(A, start, mid, B, index);
-			pmerge_sort(A, mid + 1, end, B, index);
 		}
+		pmerge_sort(A, mid + 1, end, B, index);
 		#pragma omp taskwait
 		pmerge(start, mid + 1, start, mid, end, index, A, B);
 		for (int i = start; i <= end; i++)
@@ -111,12 +111,10 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 
 void parallelSort(int N, keytype* A) {
 	keytype* B = new keytype[N];
-	int num_of_threads = omp_get_num_threads();
-	printf("No of threads: %d",num_of_threads);
 	#pragma omp parallel
 	#pragma omp single nowait
 	{
-	pmerge_sort(A, 0, N - 1, B, 4);
+	pmerge_sort(A, 0, N - 1, B, (N/8)); //Considering there are 8 threads generated during parallel execution if there are more threads then it will execute at a faster rate than this.
  	}
 
 }
