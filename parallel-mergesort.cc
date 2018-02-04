@@ -7,10 +7,17 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <string.h>
+
 #include "sort.hh"
 
+#include <string.h>
+// #include <omp.h>
+
+int number_swap(int num1, int num2){
+  int tmp  = num1;
+      num1 = num2;
+      num2 = tmp;
+}
 
 int compare (const void* a, const void* b)
 {
@@ -24,38 +31,21 @@ int compare (const void* a, const void* b)
     return 1;
 }
 
-int max_number(int a, int b){
-  if(a>b) return a;
-  return b;
-}
+void serialMergeForParallel(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3) {
 
-int binary_search(int key, keytype* A, int start, int end){
-  int low1 = start;
-	int high1 = max_number(start, end + 1);
-	int mid1;
-  while(low1<high1){
-    int mid1=floor((low1+high1)/2);
-    if(key<=A[mid1]) high1=mid1;
-    else low1 = mid1+1;
-  }
+	// T[start1] is the first element of the first sub-array
+	// T[end1] is the last element of the first sub-array
+	// T[start2] is the first element of the second sub-array
+	// T[end2] is the last element of the second sub-array
 
-  return high1;
-}
-void serialMergeForParallel(keytype* T, int p1, int r1, int p2, int r2, keytype* A, int p3) {
-
-	// T[p1] is the first element of the first sub-array
-	// T[r1] is the last element of the first sub-array
-	// T[p2] is the first element of the second sub-array
-	// T[r2] is the last element of the second sub-array
-
-	// A[p3] is the first element where the right value should be written to
+	// A[start3] is the first element where the right value should be written to
 
 	// control variables:
-	int i = p1;
-	int j = p2;
-	int k = p3;
+	int i = start1;
+	int j = start2;
+	int k = start3;
 
-	while ( (i <= r1) && (j <= r2) ) {
+	while ( (i <= end1) && (j <= end2) ) {
 
 		if ( T[i] <= T[j] ) {
 
@@ -75,7 +65,7 @@ void serialMergeForParallel(keytype* T, int p1, int r1, int p2, int r2, keytype*
 
 	// either array might have elements left
 	// if the first array has elements left:
-	while (i <= r1) {
+	while (i <= end1) {
 
 		A[k] = T[i];
 		i++;
@@ -83,7 +73,7 @@ void serialMergeForParallel(keytype* T, int p1, int r1, int p2, int r2, keytype*
 
 	}
 	// if the second array has elements left:
-	while (j <= r2) {
+	while (j <= end2) {
 
 		A[k] = T[j];
 		j++;
@@ -93,117 +83,167 @@ void serialMergeForParallel(keytype* T, int p1, int r1, int p2, int r2, keytype*
 
 }
 
-void swap(int a, int b){
-  int tmp = a;
-  a=b;
-  b=tmp;
+
+int get_max_number(int num1, int num2) {
+	if(num1>num2) return num1;
+  else return num2;
 }
 
-void pmerge(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3, int index){
-  int n1 = end1-start1+1;
-  int n2 = end2-start2+1;
+int binarySearch(keytype key, keytype* sub, int low1, int high1) {
+	// sub[p] is the first element of the sub-array
+	// sub[r] is the last element of the sub-array
 
-  	if (n1+n2 <= index) {
-  		// serialize the merge:
-  		serialMergeForParallel(T, start1, end1, start2, end2, A, start3);
-
-  	} else {
-  if(n1<n2) {
-    swap(start1,start2);
-    swap(end1,end2);
-    swap(n1,n2);
-  }
-
-  if(n1==0) return;
-  else{
-    int mid1 = floor((start1+end1)/2);
-    int mid2 = binary_search(T[mid1],T, start2,end2);
-    int mid3 = start3+(end1-start1)+(end2-start2);
-
-    A[mid3] = T[mid1];
-
-    // #pragma omp parallel
-
-    // {
+	int low = low1, high = get_max_number(low1, high1+ 1);
 
 
-    #pragma omp task
-    {
-      pmerge(T, start1, mid1-1, start2, mid2-1, A, start3, index);
-    }
-      pmerge(T, mid1+1, end1, mid2, end2, A, mid3+1, index);
+	while (low < high) {
+
+		int mid = (low + high) / 2;
+
+		if (key <= sub[mid]) {
+
+			high = mid;
+
+		} else {
+
+			low = mid + 1;
+
+		}
+	}
+
+	return high; // returns the index such that all the elements below this index are lower than the key
+
+}
+
+void parallelMerge(keytype* T, int p1, int r1, int p2, int r2, keytype* A, int p3, int base) {
+	// T[p1] is the first element of the first sub-array
+	// T[r1] is the last element of the first sub-array
+	// T[p2] is the first element of the second sub-array
+	// T[r2] is the last element of the second sub-array
+
+	// T[p1..r1] AND T[p2..r2] are sorted sub-arrays
+
+	// A[p3] is the first element of array that holds the final value
+
+	int n1 = r1 - p1 + 1; // number of elements in the first sub-array
+	int n2 = r2 - p2 + 1; // number of elements in the second sub-array
+
+	int N = n1 + n2;
+
+	if (N <= base) {
+		// serialize the merge:
+		serialMergeForParallel(T, p1, r1, p2, r2, A, p3);
+
+	} else {
+		// divide and conquer the merge operation:
+
+		if (n1 < n2) { // complying to our assumption
+
+		  int temp;
+
+		  // exchange p1 and p2
+		  temp = p1;
+		  p1 = p2;
+		  p2 = temp;
+
+		  // exchange r1 and r2
+		  temp = r1;
+		  r1 = r2;
+		  r2 = temp;
+
+		  // exchange n1 and n2
+		  temp = n1;
+		  n1 = n2;
+		  n2 = temp;
+
+		}
+
+		if (n1 == 0) { // if both the arrays are empty
+
+			return;
+
+		} else {
+
+			int q1 = (p1 + r1) / 2;
+			int q2 = binarySearch(T[q1], T, p2, r2);
+			int q3 = p3 + (q1 - p1) + (q2 - p2);
+			A[q3] = T[q1];
+
+			#pragma omp task
+      {
+			  parallelMerge(T, p1, q1 - 1, p2, q2 - 1, A, p3, base);
+      }
+			parallelMerge(T, q1 + 1, r1, q2, r2, A, q3 + 1, base);
       #pragma omp taskwait
-    // }
-  }
+		}
+	}
 
 }
-}
 
-void pmerge_sort(keytype* A, int start, int end, keytype* B, int index){
-  printf("start: %d end :%d index : %d",start,end,index);
-  printf("\n");
-  int n=end-start+1;
+void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 
-  if ( n <= index) {
+	int n = end - start + 1;
 
+	if ( n <= index) {
+
+		// sort the sub-array in place and return:
 		qsort(A + start, n, sizeof(keytype), compare);
 		return;
 
-	}
-  else {
+	} else {
 
-    //keytype* T = new keytype[n];
-    int split_var1 = floor((start+end)/2);
-    int split_var2 = split_var1-start+1;
-    // #pragma omp parallel
+		// divide up the task:
+
+		// A[middle] is the last element of the first sub-array
+		// int mid = start + (end - start) / 2; // want to avoid (start + end) /2
+    int mid = (start+end)/2;
+
+    // #pragma omp task
     // {
-    #pragma omp task
-   {
-      pmerge_sort(A, start, split_var1, B, index);
-    }
-      pmerge_sort(A, split_var1+1, end, B, index);
+		  pmerge_sort(A, start, mid, B, index); // recursively divide up the first sub-array on a separate thread
 
-    #pragma omp taskwait
-    // printf("\nBefore done");
-    // for(int i=0;i<N;i++) {
-    //   printf("A[%d] : %lu \t", i, A[i] );
+    pmerge_sort(A, mid + 1, end, B, index); // recursively divide up the second sub-array on the same thread
     // }
-    // printf("\nBefore done");
-    // for(int i=0;i<N;i++) {
-    //   printf("T[%d] : %lu \t", i, T[i] );
+    #pragma omp taskwait // wait for both tasks to sync up here before proceding to the merge
+		//merge(A, start, middle, end, temp); // merge the sorted sub-arrays sequentially
+		parallelMerge(A, start, mid, mid + 1, end, B, start, index); // merge the sorted sub-arrays parallely
+    printf("copy done from : start : %d end:%d\n",start,end);
+    // for(int i=start;i<=(end-start+1);i++){
+    //   int tmp = B[i];
+    //   B[i] = A[i];
+    //   A[i] = tmp;
     // }
-    // printf("\n");
-    // parallelMerge(A, start, middle, middle + 1, end, temp, start, base);
-    // pmerge(T,0,split_var2,split_var2+1,n,B,index);
-    pmerge(A,start,split_var1,split_var1+1,end,B,start, index);
-    memcpy(A + start, B + start, (end - start + 1) * sizeof(keytype));
-  }
+		memcpy(A + start, B + start, (end - start + 1) * sizeof(keytype));
+	}
+
 }
 
-void parallelSort(int N, keytype* A){
-  keytype* B = new keytype[N];
-  for(int i=0;i<N;i++) {
-    printf("A[%d] : %lu \t", i, A[i] );
-  }
-  printf("\n");
-
-  #pragma omp parallel
+void parallelSort (int N, keytype* A) // the result goes into A
 {
-  //int numOfThreads = omp_get_num_threads();
-  #pragma omp master
-  {
-  // //   printf("Number of threads spawned: %d\n", numOfThreads);
-  }
-
-  #pragma omp single
-  {
-  pmerge_sort(A, 0, N-1, B, 2);
-
+	keytype* B = new keytype[N]; // on heap of master, shared by all threads
+//   for(int i=0;i<N;i++) {
+//   printf("A[%d] : %lu \t", i, A[i] );
+// }
+printf("\n");
+  // #pragma omp parallel
+  // {
+  // 	// int numOfThreads = omp_get_num_threads();
+  //   #pragma omp master
+  //   {
+  //     // printf("Number of threads spawned: %d\n", numOfThreads);
+  //   }
+  //
+	//   #pragma omp single
+  //   {
+       pmerge_sort(A, 0, N-1, B, 2);
+      // mergeSort(A, 0, N-1, temp, N/4); // call the recursive mergeSort with a single thread
+  //   }
+  //
+  // }
+//   for(int i=0;i<N;i++) {
+//   printf("A[%d] : %lu \t", i, A[i] );
+// }
+printf("\n");
 
 }
-}
-
-for(int i=0;i<N;i++) {
-  printf("A[%d] : %lu \t", i, A[i] );
-}
-}
+/* eof */
