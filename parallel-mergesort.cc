@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <omp.h>
 #include "sort.hh"
 
 #include <string.h>
@@ -160,6 +160,8 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 void parallelSort (int N, keytype* A) 
 {
 	keytype* B = new keytype[N]; 
+	#pragma omp parallel
+	#pragma omp single nowait
 	pmerge_sort(A, 0, N-1, B, 10);
       
 }
