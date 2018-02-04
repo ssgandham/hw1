@@ -115,7 +115,8 @@ int binarySearch(keytype key, keytype* sub, int low1, int high1) {
 
 }
 
-void parallelMerge(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3, int index) {
+// void parallelMerge(keytype* T, int start1, int end1, int start2, int end2, keytype* A, int start3, int index) {
+void pmerge(int start1,int start2, int start3, int end1, int end2, int index, keytype* T, keytype* A){
 	// T[start1] is the first element of the first sub-array
 	// T[end1] is the last element of the first sub-array
 	// T[start2] is the first element of the second sub-array
@@ -173,9 +174,11 @@ void parallelMerge(keytype* T, int start1, int end1, int start2, int end2, keyty
 
 			#pragma omp task
       {
-			  parallelMerge(T, start1, mid1 - 1, start2, mid2 - 1, A, start3, index);
+        // parallelMerge(T, start1, mid1 - 1, start2, mid2 - 1, A, start3, index);
+			  pmerge(start1,start2, start3, mid1 - 1,mid2 - 1, index, T, A);
       }
-			parallelMerge(T, mid1 + 1, end1, mid2, end2, A, mid3 + 1, index);
+			//parallelMerge(T, mid1 + 1, end1, mid2, end2, A, mid3 + 1, index);
+      pmerge(mid1+1,mid2,mid3+1,end1,end2,index, T,A);
       #pragma omp taskwait
 		}
 	}
@@ -208,7 +211,8 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
     // }
     #pragma omp taskwait // wait for both tasks to sync up here before proceding to the merge
 		//merge(A, start, middle, end, temp); // merge the sorted sub-arrays sequentially
-		parallelMerge(A, start, mid, mid + 1, end, B, start, index); // merge the sorted sub-arrays parallely
+    pmerge(start, mid + 1, start, mid, end, index, A, B);
+		// parallelMerge(A, start, mid, mid + 1, end, B, start, index); // merge the sorted sub-arrays parallely
     //printf("\ncopy done from : start : %d end:%d\n",start,end);
     // for(int i=start;i<=(end-start+1);i++){
     //   int tmp = B[i];
