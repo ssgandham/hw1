@@ -189,13 +189,13 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 
 	int n = end - start + 1;
 
-	if ( n <= index) {
-
-		// sort the sub-array in place and return:
-		qsort(A + start, n, sizeof(keytype), compare);
-		return;
-
-	} else {
+	if ( (end-start+1)>1) {
+  //
+	// 	// sort the sub-array in place and return:
+	// 	qsort(A + start, n, sizeof(keytype), compare);
+	// 	return;
+  //
+	// } else {
 
 		// divide up the task:
 
