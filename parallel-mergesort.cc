@@ -89,7 +89,7 @@ int get_max_number(int numbA, int numbB) {
   else return numbB;
 }
 
-int binarySearch(keytype key, keytype* sub, int low1, int high1) {
+int binary_search(int low1, int high1, keytype key, keytype* arr) {
 	// sub[p] is the first element of the sub-array
 	// sub[r] is the last element of the sub-array
 
@@ -100,7 +100,7 @@ int binarySearch(keytype key, keytype* sub, int low1, int high1) {
 
 		int mid = (low + high) / 2;
 
-		if (key <= sub[mid]) {
+		if (key <= arr[mid]) {
 
 			high = mid;
 
@@ -133,6 +133,7 @@ void pmerge(int start1,int start2, int start3, int end1, int end2, int index, ke
 
 	if ((n1+n2) <= index) {
 		// serialize the merge:
+    printf("n1 : %d  : n2 : %d : index : %d \n",n1,n2,index);
 		serialMergeForParallel(T, start1, end1, start2, end2, A, start3);
 
 	} else {
@@ -168,7 +169,7 @@ void pmerge(int start1,int start2, int start3, int end1, int end2, int index, ke
 		} else {
 
 			int mid1 = (start1 + end1) / 2;
-			int mid2 = binarySearch(T[mid1], T, start2, end2);
+			int mid2 = binary_search(start2, end2,T[mid1], T);
 			int mid3 = start3 + (mid1 - start1) + (mid2 - start2);
 			A[mid3] = T[mid1];
 
@@ -187,7 +188,7 @@ void pmerge(int start1,int start2, int start3, int end1, int end2, int index, ke
 
 void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 
-	int n = end - start + 1;
+	//int n = end - start + 1;
 
 	if ( (end-start+1)>1) {
   //
@@ -205,7 +206,7 @@ void pmerge_sort(keytype* A, int start, int end, keytype* B, int index) {
 
     // #pragma omp task
     // {
-		  pmerge_sort(A, start, mid, B, index); // recursively divide up the first sub-array on a separate thread
+		pmerge_sort(A, start, mid, B, index); // recursively divide up the first sub-array on a separate thread
 
     pmerge_sort(A, mid + 1, end, B, index); // recursively divide up the second sub-array on the same thread
     // }
